@@ -8,10 +8,16 @@ const TILE_SPACE := 64
 const TILE_SIZE := 60
 const OFFSET_X := 100
 const OFFSET_Y := 100
+const LEVEL := 2
 
 func _ready():
-	maze = Level1.create_maze()
-	settings = Level1.create_settings()
+	match LEVEL:
+		1:
+			maze = Level1.create_maze()
+			settings = Level1.create_settings()
+		2: 
+			maze = Level2.create_maze()
+			settings = Level2.create_settings()
 
 func _draw():
 	draw_maze(maze)
@@ -31,18 +37,27 @@ func draw_maze(maze: Maze) -> void:
 				colour = Color.GREEN
 			elif maze.is_finish(pos):
 				colour = Color.GOLD
-			# draw walls & spikes later
+			elif pos in maze.spikes:
+				colour = Color.DARK_RED
 			var corner := Vector2(OFFSET_X + x * TILE_SPACE, OFFSET_Y + y * TILE_SPACE)
 			draw_rect(Rect2(OFFSET_X + x * TILE_SPACE, OFFSET_Y + y * TILE_SPACE, TILE_SIZE, TILE_SIZE), colour)
 
 			if maze.stickers.has(pos):
 				var centre := corner + Vector2(TILE_SIZE / 2.0, TILE_SIZE / 2.0)
-				draw_circle(centre, TILE_SIZE / 4.0, Color.BLUE)
+				var sticker_colour := Color.BLUE
+				if maze.stickers[pos] < 0:
+					sticker_colour = Color.ORANGE
+				draw_circle(centre, TILE_SIZE / 4.0, sticker_colour)
 
 func _input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var grid_pos := screen_to_grid(get_local_mouse_position())
 		if maze.place_reward_sticker(grid_pos, settings):
+			queue_redraw()
+
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		var grid_pos := screen_to_grid(get_local_mouse_position())
+		if maze.place_penalty_sticker(grid_pos, settings):
 			queue_redraw()
 
 	if event is InputEventKey and event.pressed and event.keycode == KEY_SPACE:
@@ -66,8 +81,9 @@ func train() -> void:
 
 	print ("Evaluation run")
 	trainer.agent.epsilon = 0
-	route = trainer.run_one_episode(settings.max_steps)
+	route = trainer.run_final_episode(settings.max_steps)
 	print("Total reward: ", trainer.total_reward)
+	print("Stuck: ", trainer.stuck_reason)
 	queue_redraw()
 
 func grid_to_centre(pos: Vector2i) -> Vector2:

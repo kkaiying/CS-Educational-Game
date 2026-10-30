@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bn6b80q25bhta"]
 
-[ext_resource type="Script" uid="uid://byq6uam5xl4du" path="res://main.gd" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://byq6uam5xl4du" path="res://level.gd" id="1_ig7tw"]
 [ext_resource type="Texture2D" uid="uid://dm354d88ej6j4" path="res://assets/Sprout Lands - Sprites - Basic pack/Characters/Basic Charakter Spritesheet.png" id="2_0xm2m"]
 
 [node name="Node2D" type="Node2D" unique_id=1125532875]
