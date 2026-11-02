@@ -6,7 +6,7 @@ const RUNS_PATH := "res://results/level_2.csv"
 const SUMMARY_PATH := "res://results/level_2_summary.csv"
 
 func _init():
-    var run_lines: Array[String] = ["case,run,route_length,reached_finish,touched_spike,total_reward,train_ms,route"]
+    var run_lines: Array[String] = ["case,run,route_length,reached_finish,touched_spike,total_reward,stuck_reason,train_ms,route"]
     var summary_lines: Array[String] = ["case,runs,reached_finish,avoided_spikes,avg_route_length,avg_total_reward,avg_train_ms"]
 
     print("case                  reached  avoided  avg_length  avg_reward  avg_ms")
@@ -27,7 +27,7 @@ func _init():
             total_length += result.length
             sum_reward += result.total_reward
             total_ms += result.ms
-            run_lines.append("%s,%d,%d,%s,%s,%.1f,%.2f,\"%s\"" % [case_name, run, result.length, result.reached, result.touched_spike, result.total_reward, result.ms, result.route])
+            run_lines.append("%s,%d,%d,%s,%s,%.1f,%s,%.2f,\"%s\"" % [case_name, run, result.length, result.reached, result.touched_spike, result.total_reward, result.stuck_reason, result.ms, result.route])
 
         var avg_length := float(total_length) / RUNS
         var avg_reward := sum_reward / RUNS
@@ -69,13 +69,14 @@ func run_once(case_name: String) -> Dictionary:
     trainer.maze = maze
     trainer.agent = QAgent.new()
     trainer.robot = Robot.new()
+    trainer.settings = settings
 
     var start_time := Time.get_ticks_usec()
     trainer.train(settings.episodes, settings.max_steps)
     var ms := (Time.get_ticks_usec() - start_time) / 1000.0
 
     trainer.agent.epsilon = 0
-    var route := trainer.run_one_episode(settings.max_steps)
+    var route := trainer.run_final_episode(settings.max_steps)
 
     var touched_spike := false
     for pos in route:
@@ -87,6 +88,7 @@ func run_once(case_name: String) -> Dictionary:
         "reached": route.back() == maze.finish,
         "touched_spike": touched_spike,
         "total_reward": trainer.total_reward,
+        "stuck_reason": trainer.stuck_reason,
         "ms": ms,
         "route": route_to_text(route),
     }

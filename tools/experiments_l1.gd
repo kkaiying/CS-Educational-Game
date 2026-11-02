@@ -8,7 +8,7 @@ const RUNS_PATH := "res://results/level_1_alpha_05.csv"
 const SUMMARY_PATH := "res://results/level_1_summary_alpha_05.csv"
 
 func _init():
-    var run_lines: Array[String] = ["episodes,run,route_length,reached_finish,shortest,train_ms,route"]
+    var run_lines: Array[String] = ["episodes,run,route_length,reached_finish,shortest,stuck_reason,train_ms,route"]
     var summary_lines: Array[String] = ["episodes,runs,reached_finish,shortest,avg_route_length,avg_train_ms"]
 
     print("episodes  reached  shortest  avg_length  avg_ms")
@@ -27,7 +27,7 @@ func _init():
                 shortest_count += 1
             total_length += result.length
             total_ms += result.ms
-            run_lines.append("%d,%d,%d,%s,%s,%.2f,\"%s\"" % [episodes, run, result.length, result.reached, result.shortest, result.ms, result.route])
+            run_lines.append("%d,%d,%d,%s,%s,%s,%.2f,\"%s\"" % [episodes, run, result.length, result.reached, result.shortest, result.stuck_reason, result.ms, result.route])
 
         var avg_length := float(total_length) / RUNS
         var avg_ms := total_ms / RUNS
@@ -49,13 +49,14 @@ func run_once(episodes: int) -> Dictionary:
     trainer.maze = maze
     trainer.agent = QAgent.new()
     trainer.robot = Robot.new()
+    trainer.settings = settings
 
     var start_time := Time.get_ticks_usec()
     trainer.train(episodes, MAX_STEPS)
     var ms := (Time.get_ticks_usec() - start_time) / 1000.0
 
     trainer.agent.epsilon = 0
-    var route := trainer.run_one_episode(MAX_STEPS)
+    var route := trainer.run_final_episode(MAX_STEPS)
     var length := route.size() - 1
     var reached: bool = route.back() == maze.finish
 
@@ -63,6 +64,7 @@ func run_once(episodes: int) -> Dictionary:
         "length": length,
         "reached": reached,
         "shortest": reached and length == SHORTEST_ROUTE,
+        "stuck_reason": trainer.stuck_reason,
         "ms": ms,
         "route": route_to_text(route),
     }

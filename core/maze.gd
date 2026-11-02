@@ -6,6 +6,8 @@ var width: int
 var height: int
 var stickers: Dictionary[Vector2i, float] = {}
 var spikes: Array[Vector2i] = []
+var walls: Array[Vector2i] = []
+var distances: Dictionary[Vector2i, int] = {}
 
 
 func is_finish(pos: Vector2i) -> bool:
@@ -44,3 +46,22 @@ func place_penalty_sticker(pos: Vector2i, settings: LevelSettings) -> bool:
         return false
     stickers[pos] = settings.penalty_sticker_value
     return true
+
+func can_enter(pos: Vector2i) -> bool:
+    return is_inside(pos) and not (pos in walls)
+
+func compute_distances() -> void:
+    distances = {finish: 0}
+    var queue: Array[Vector2i] = [finish]
+    while not queue.is_empty():
+        var pos: Vector2i = queue.pop_front()
+        for step in [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]:
+            var next: Vector2i = pos + step
+            if can_enter(next) and not distances.has(next):
+                distances[next] = distances[pos] + 1
+                queue.append(next)
+
+func walking_distance(pos: Vector2i) -> int:
+    if distances.is_empty():
+        compute_distances()
+    return distances[pos]

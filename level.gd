@@ -8,7 +8,7 @@ const TILE_SPACE := 64
 const TILE_SIZE := 60
 const OFFSET_X := 100
 const OFFSET_Y := 100
-const LEVEL := 2
+const LEVEL := 3
 
 func _ready():
 	match LEVEL:
@@ -18,6 +18,12 @@ func _ready():
 		2: 
 			maze = Level2.create_maze()
 			settings = Level2.create_settings()
+		3: 
+			maze = Level3.create_maze()
+			settings = Level3.create_settings()
+		4: 
+			maze = Level4.create_maze()
+			settings = Level4.create_settings()
 
 func _draw():
 	draw_maze(maze)
@@ -39,6 +45,8 @@ func draw_maze(maze: Maze) -> void:
 				colour = Color.GOLD
 			elif pos in maze.spikes:
 				colour = Color.DARK_RED
+			elif pos in maze.walls:
+				colour = Color.BLACK
 			var corner := Vector2(OFFSET_X + x * TILE_SPACE, OFFSET_Y + y * TILE_SPACE)
 			draw_rect(Rect2(OFFSET_X + x * TILE_SPACE, OFFSET_Y + y * TILE_SPACE, TILE_SIZE, TILE_SIZE), colour)
 
@@ -73,6 +81,7 @@ func train() -> void:
 	trainer.maze = maze
 	trainer.agent = QAgent.new()
 	trainer.robot = Robot.new()
+	trainer.settings = settings
 
 	print("Training start")
 	var start_time := Time.get_ticks_msec()
@@ -82,9 +91,23 @@ func train() -> void:
 	print ("Evaluation run")
 	trainer.agent.epsilon = 0
 	route = trainer.run_final_episode(settings.max_steps)
+	print(get_result(trainer))
 	print("Total reward: ", trainer.total_reward)
 	print("Stuck: ", trainer.stuck_reason)
 	queue_redraw()
 
 func grid_to_centre(pos: Vector2i) -> Vector2:
 	return Vector2(OFFSET_X + pos.x * TILE_SPACE + TILE_SIZE / 2.0, OFFSET_Y + pos.y * TILE_SPACE + TILE_SIZE / 2.0)
+
+func get_result(trainer: Trainer) -> String:
+	if trainer.stuck_reason != "":
+		return "FAIL: stuck (" + trainer.stuck_reason + ")"
+
+	for pos in route:
+		if pos in maze.spikes:
+			return "FAIL: hit spikes"
+
+	if route.back() == maze.finish:
+		return "PASS"
+
+	return "FAIL: ran out of steps"
