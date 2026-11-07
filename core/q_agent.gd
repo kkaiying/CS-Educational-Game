@@ -34,8 +34,8 @@ func choose_direction(pos: Vector2i) -> Robot.Direction:
     return best_direction(pos)
 
 
-# The Q-learning update, called after every move.
-# done = true if the move ended the run (e.g. reached the finish), so nothing comes after it.
+# Q-learning update, called after every move.
+# done = true if the move ended the run so nothing comes after it.
 func learn(old_pos: Vector2i, dir: Robot.Direction, reward: float, new_pos: Vector2i, done: bool) -> void:
     var scores := get_scores(old_pos)
     var target := reward

@@ -8,16 +8,17 @@ var stickers: Dictionary[Vector2i, float] = {}
 var spikes: Array[Vector2i] = []
 var walls: Array[Vector2i] = []
 var distances: Dictionary[Vector2i, int] = {}
+var crystals: Dictionary[Vector2i, float] = {}
 
 
 func is_finish(pos: Vector2i) -> bool:
-    return pos == finish
+    return pos == finish or crystals.has(pos)
 
 func is_inside(target_pos: Vector2i) -> bool:
     return target_pos.x < width && target_pos.y < height && target_pos.x >= 0 && target_pos.y >= 0
 
 func get_reward(pos: Vector2i) -> float:
-    return stickers.get((pos), 0.0)
+    return stickers.get((pos), 0.0) + crystals.get(pos, 0.0)
 
 func place_reward_sticker(pos: Vector2i, settings: LevelSettings) -> bool:
     if not (is_inside(pos)):                             # if pos is outside the maze

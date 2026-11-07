@@ -8,7 +8,7 @@ const TILE_SPACE := 64
 const TILE_SIZE := 60
 const OFFSET_X := 100
 const OFFSET_Y := 100
-const LEVEL := 3
+const LEVEL := 4
 
 func _ready():
 	match LEVEL:
@@ -24,6 +24,9 @@ func _ready():
 		4: 
 			maze = Level4.create_maze()
 			settings = Level4.create_settings()
+		5:
+			maze = Level5.create_maze()
+			settings = Level5.create_settings()
 
 func _draw():
 	draw_maze(maze)
@@ -41,6 +44,8 @@ func draw_maze(maze: Maze) -> void:
 			var colour := Color.GRAY
 			if pos == maze.start:
 				colour = Color.GREEN
+			elif maze.crystals.has(pos):
+				colour = Color.CYAN
 			elif maze.is_finish(pos):
 				colour = Color.GOLD
 			elif pos in maze.spikes:
@@ -80,6 +85,7 @@ func train() -> void:
 	var trainer := Trainer.new()
 	trainer.maze = maze
 	trainer.agent = QAgent.new()
+	trainer.agent.gamma = settings.patience
 	trainer.robot = Robot.new()
 	trainer.settings = settings
 
@@ -106,6 +112,9 @@ func get_result(trainer: Trainer) -> String:
 	for pos in route:
 		if pos in maze.spikes:
 			return "FAIL: hit spikes"
+
+	if maze.crystals.has(route.back()):
+		return "FAIL: took the crystal"
 
 	if route.back() == maze.finish:
 		return "PASS"

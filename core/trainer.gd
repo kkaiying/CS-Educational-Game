@@ -30,7 +30,7 @@ func run_one_episode(max_steps: int) -> Array:
 		if new_pos != old_pos:                  # only claim reward if the robot actually moved, prevents farming at a wall
 			reward = maze.get_reward(new_pos)
 		total_reward += reward
-		reward += get_bonus(old_pos, new_pos)
+		reward += get_bonus(old_pos, new_pos, done)
 
 		agent.learn(old_pos, dir, reward, new_pos, done)
 
@@ -87,9 +87,11 @@ func distance_to_goal(pos: Vector2i) -> int:
 	return maze.walking_distance(pos)
 
 # potential = what the goal reward is worth from this square, highest next to the goal
-func get_bonus(old_pos: Vector2i, new_pos: Vector2i) -> float:
+func get_bonus(old_pos: Vector2i, new_pos: Vector2i, done: bool) -> float:
 	if not settings.progress_bonus:
 		return 0.0
 	var old_potential := settings.reward_sticker_value * pow(agent.gamma, distance_to_goal(old_pos) - 1)
-	var new_potential := settings.reward_sticker_value * pow(agent.gamma, distance_to_goal(new_pos) - 1)
+	var new_potential := 0.0                # run ends here so nothing comes after (otherwise the bonus secretly rewards the goal)
+	if not done:
+		new_potential = settings.reward_sticker_value * pow(agent.gamma, distance_to_goal(new_pos) - 1)
 	return agent.gamma * new_potential - old_potential
