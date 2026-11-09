@@ -8,7 +8,7 @@ const TILE_SPACE := 64
 const TILE_SIZE := 60
 const OFFSET_X := 100
 const OFFSET_Y := 100
-const LEVEL := 4
+const LEVEL := 6
 
 func _ready():
 	match LEVEL:
@@ -27,6 +27,9 @@ func _ready():
 		5:
 			maze = Level5.create_maze()
 			settings = Level5.create_settings()
+		6: 
+			maze = Level6.create_maze()
+			settings = Level6.create_settings()
 
 func _draw():
 	draw_maze(maze)
@@ -50,6 +53,8 @@ func draw_maze(maze: Maze) -> void:
 				colour = Color.GOLD
 			elif pos in maze.spikes:
 				colour = Color.DARK_RED
+			elif maze.thorns.has(pos):
+				colour = Color.DARK_GREEN
 			elif pos in maze.walls:
 				colour = Color.BLACK
 			var corner := Vector2(OFFSET_X + x * TILE_SPACE, OFFSET_Y + y * TILE_SPACE)

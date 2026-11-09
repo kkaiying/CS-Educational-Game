@@ -26,9 +26,9 @@ func run_one_episode(max_steps: int) -> Array:
 		route.append(new_pos)
 
 		var done := maze.is_finish(new_pos)
-		var reward := 0.0
+		var reward := -settings.step_cost
 		if new_pos != old_pos:                  # only claim reward if the robot actually moved, prevents farming at a wall
-			reward = maze.get_reward(new_pos)
+			reward += maze.get_reward(new_pos)
 		total_reward += reward
 		reward += get_bonus(old_pos, new_pos, done)
 
@@ -64,6 +64,7 @@ func run_final_episode(max_steps: int) -> Array:
 		var new_pos := robot.position
 		route.append(new_pos)
 
+		total_reward -= settings.step_cost
 		if new_pos != old_pos:
 			total_reward += maze.get_reward(new_pos)
 
