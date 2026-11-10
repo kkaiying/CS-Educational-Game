@@ -10,8 +10,12 @@ config_version=5
 
 [application]
 
-run/main_scene="uid://bn6b80q25bhta"
+run/main_scene="uid://nanpdlct5trh"
 config/features=PackedStringArray("4.7")
+
+[autoload]
+
+Game="*uid://51fa3deeeajn"
 
 [display]
 

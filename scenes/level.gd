@@ -3,15 +3,19 @@ extends Node2D
 var maze: Maze
 var settings: LevelSettings
 var route: Array = []
+var selected_sticker := ""
+
+@onready var reward_button: Button = $UI/Screen/SidePanel/RewardButton
+@onready var penalty_button: Button = $UI/Screen/SidePanel/PenaltyButton
+@onready var one_time_button: Button = $UI/Screen/SidePanel/OneTimeButton
 
 const TILE_SPACE := 64
 const TILE_SIZE := 60
 const OFFSET_X := 100
 const OFFSET_Y := 100
-const LEVEL := 7
 
 func _ready():
-	match LEVEL:
+	match  Game.current_level:
 		1:
 			maze = Level1.create_maze()
 			settings = Level1.create_settings()
@@ -33,6 +37,11 @@ func _ready():
 		7:
 			maze = Level7.create_maze()
 			settings = Level7.create_settings()
+
+	$UI/Screen/SidePanel/BackButton.pressed.connect(Game.go_to_home)
+	$UI/Screen/SidePanel/TrainButton.pressed.connect(train)
+
+	setup_sticker_buttons()
 
 func _draw():
 	draw_maze(maze)
@@ -75,23 +84,15 @@ func draw_maze(maze: Maze) -> void:
 				var centre := corner + Vector2(TILE_SIZE / 2.0, TILE_SIZE / 2.0)
 				draw_circle(centre, TILE_SIZE / 4.0, Color.WHITE)
 
-func _input(event):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and event.shift_pressed:
-		var grid_pos := screen_to_grid(get_local_mouse_position())
-		if maze.place_one_time_sticker(grid_pos, settings):
-			queue_redraw()
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var grid_pos := screen_to_grid(get_local_mouse_position())
-		if maze.place_reward_sticker(grid_pos, settings):
-			queue_redraw()
-
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		var grid_pos := screen_to_grid(get_local_mouse_position())
-		if maze.place_penalty_sticker(grid_pos, settings):
-			queue_redraw()
-
-	if event is InputEventKey and event.pressed and event.keycode == KEY_SPACE:
-		train()
+func _unhandled_input(event):
+	if event is InputEventMouseButton and event.pressed:
+			var grid_pos := screen_to_grid(get_local_mouse_position())
+			if event.button_index == MOUSE_BUTTON_LEFT:
+				place_selected_sticker(grid_pos)
+			elif event.button_index == MOUSE_BUTTON_RIGHT:     # right click removes whatever sticker is there
+				maze.stickers.erase(grid_pos)
+				maze.one_time_stickers.erase(grid_pos)
+			stickers_changed()
 
 func screen_to_grid(screen_pos: Vector2) -> Vector2i:
 	var x := floori((screen_pos.x - OFFSET_X) / TILE_SPACE)
@@ -115,6 +116,7 @@ func train() -> void:
 	print ("Evaluation run")
 	trainer.agent.epsilon = 0
 	route = trainer.run_final_episode(settings.max_steps)
+	$UI/Screen/SidePanel/ResultLabel.text = get_result(trainer)
 	print(get_result(trainer))
 	print("Total reward: ", trainer.total_reward)
 	print("Stuck: ", trainer.stuck_reason)
@@ -138,3 +140,54 @@ func get_result(trainer: Trainer) -> String:
 		return "PASS"
 
 	return "FAIL: ran out of steps"
+
+func setup_sticker_buttons() -> void:
+	var group := ButtonGroup.new()
+	for button in [reward_button, penalty_button, one_time_button]:
+		button.toggle_mode = true
+		button.button_group = group
+
+	reward_button.pressed.connect(func(): selected_sticker = "reward")
+	penalty_button.pressed.connect(func(): selected_sticker = "penalty")
+	one_time_button.pressed.connect(func(): selected_sticker = "one_time")
+	$UI/Screen/SidePanel/ClearButton.pressed.connect(clear_stickers)
+
+	# hide sticker types that the level doesn't allow
+	reward_button.visible = settings.max_reward_stickers > 0
+	penalty_button.visible = settings.max_penalty_stickers > 0
+	one_time_button.visible = settings.max_one_time_stickers > 0
+
+	update_sticker_counts()
+
+func update_sticker_counts() -> void:
+	var rewards := 0
+	var penalties := 0
+	for value in maze.stickers.values():
+		if value > 0:
+			rewards += 1
+		else:
+			penalties += 1
+	reward_button.text = "Reward (%d left)" % (settings.max_reward_stickers - rewards)
+	penalty_button.text = "Penalty (%d left)" % (settings.max_penalty_stickers - penalties)
+	one_time_button.text = "One-time (%d left)" % (settings.max_one_time_stickers - maze.one_time_stickers.size())
+
+func place_selected_sticker(grid_pos: Vector2i) -> void:
+	match selected_sticker:
+		"reward":
+			maze.place_reward_sticker(grid_pos, settings)
+		"penalty":
+			maze.place_penalty_sticker(grid_pos, settings)
+		"one_time":
+			maze.place_one_time_sticker(grid_pos, settings)
+
+func clear_stickers() -> void:
+	maze.stickers.clear()
+	maze.one_time_stickers.clear()
+	stickers_changed()
+
+# after any sticker change the old route no longer matches so hide it
+func stickers_changed() -> void:
+	route = []
+	$UI/Screen/SidePanel/ResultLabel.text = "Place stickers, then press Train"
+	update_sticker_counts()
+	queue_redraw()
