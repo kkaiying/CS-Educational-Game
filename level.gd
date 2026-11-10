@@ -8,7 +8,7 @@ const TILE_SPACE := 64
 const TILE_SIZE := 60
 const OFFSET_X := 100
 const OFFSET_Y := 100
-const LEVEL := 6
+const LEVEL := 7
 
 func _ready():
 	match LEVEL:
@@ -30,6 +30,9 @@ func _ready():
 		6: 
 			maze = Level6.create_maze()
 			settings = Level6.create_settings()
+		7:
+			maze = Level7.create_maze()
+			settings = Level7.create_settings()
 
 func _draw():
 	draw_maze(maze)
@@ -49,6 +52,8 @@ func draw_maze(maze: Maze) -> void:
 				colour = Color.GREEN
 			elif maze.crystals.has(pos):
 				colour = Color.CYAN
+			elif pos in maze.stars:
+				colour = Color.PURPLE
 			elif maze.is_finish(pos):
 				colour = Color.GOLD
 			elif pos in maze.spikes:
@@ -66,9 +71,16 @@ func draw_maze(maze: Maze) -> void:
 				if maze.stickers[pos] < 0:
 					sticker_colour = Color.ORANGE
 				draw_circle(centre, TILE_SIZE / 4.0, sticker_colour)
+			if maze.one_time_stickers.has(pos):
+				var centre := corner + Vector2(TILE_SIZE / 2.0, TILE_SIZE / 2.0)
+				draw_circle(centre, TILE_SIZE / 4.0, Color.WHITE)
 
 func _input(event):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and event.shift_pressed:
+		var grid_pos := screen_to_grid(get_local_mouse_position())
+		if maze.place_one_time_sticker(grid_pos, settings):
+			queue_redraw()
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var grid_pos := screen_to_grid(get_local_mouse_position())
 		if maze.place_reward_sticker(grid_pos, settings):
 			queue_redraw()
@@ -91,6 +103,7 @@ func train() -> void:
 	trainer.maze = maze
 	trainer.agent = QAgent.new()
 	trainer.agent.gamma = settings.patience
+	trainer.agent.epsilon = settings.curiosity
 	trainer.robot = Robot.new()
 	trainer.settings = settings
 

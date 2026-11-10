@@ -12,11 +12,13 @@ const STUCK_VISITS := 10
 func run_one_episode(max_steps: int) -> Array:
 	robot.position = maze.start
 	total_reward = 0.0
+	var collected := 0                      # every one-time sticker is back at the start of a run
 	var route: Array = [maze.start]
 
 	for i in range(max_steps):
 		var old_pos := robot.position
-		var dir := agent.choose_direction(old_pos)
+		var old_state := Vector3i(old_pos.x, old_pos.y, collected)
+		var dir := agent.choose_direction(old_state)
 		robot.move(dir)
 
 		if not maze.can_enter(robot.position): # if robot is trying to exit the maze return it back to its old pos
@@ -29,10 +31,15 @@ func run_one_episode(max_steps: int) -> Array:
 		var reward := -settings.step_cost
 		if new_pos != old_pos:                  # only claim reward if the robot actually moved, prevents farming at a wall
 			reward += maze.get_reward(new_pos)
+			var bit := one_time_bit(new_pos)
+			if bit != 0 and (collected & bit) == 0:    # a one-time sticker it hasn't collected yet
+				reward += maze.one_time_stickers[new_pos]
+				collected |= bit
 		total_reward += reward
 		reward += get_bonus(old_pos, new_pos, done)
 
-		agent.learn(old_pos, dir, reward, new_pos, done)
+		var new_state := Vector3i(new_pos.x, new_pos.y, collected)
+		agent.learn(old_state, dir, reward, new_state, done)
 
 		if done:
 			break
@@ -48,14 +55,16 @@ func run_final_episode(max_steps: int) -> Array:
 	robot.position = maze.start
 	total_reward = 0.0
 	stuck_reason = ""
+	var collected := 0
 	var route: Array = [maze.start]
 
-	var visits := {maze.start : 1}
-	var reward_at_first_visit := {maze.start: 0.0}
+	var start_state := Vector3i(maze.start.x, maze.start.y, 0)
+	var visits := {start_state: 1}          # counted per state, so passing a square again after collecting isn't "stuck"
+	var reward_at_first_visit := {start_state: 0.0}
 
 	for i in range(max_steps):
 		var old_pos := robot.position
-		var dir := agent.choose_direction(old_pos)
+		var dir := agent.choose_direction(Vector3i(old_pos.x, old_pos.y, collected))
 		robot.move(dir)
 
 		if not maze.can_enter(robot.position):
@@ -67,16 +76,21 @@ func run_final_episode(max_steps: int) -> Array:
 		total_reward -= settings.step_cost
 		if new_pos != old_pos:
 			total_reward += maze.get_reward(new_pos)
+			var bit := one_time_bit(new_pos)
+			if bit != 0 and (collected & bit) == 0:
+				total_reward += maze.one_time_stickers[new_pos]
+				collected |= bit
 
 		if maze.is_finish(new_pos):
 			break
 
-		visits[new_pos] = visits.get(new_pos, 0) + 1
-		if visits[new_pos] == 1:
-			reward_at_first_visit[new_pos] = total_reward
+		var state := Vector3i(new_pos.x, new_pos.y, collected)
+		visits[state] = visits.get(state, 0) + 1
+		if visits[state] == 1:
+			reward_at_first_visit[state] = total_reward
 
-		if visits[new_pos] >= STUCK_VISITS:
-			if total_reward > reward_at_first_visit[new_pos]:
+		if visits[state] >= STUCK_VISITS:
+			if total_reward > reward_at_first_visit[state]:
 				stuck_reason = "reward_hacking"
 			else:
 				stuck_reason = "gave_up"
@@ -96,3 +110,10 @@ func get_bonus(old_pos: Vector2i, new_pos: Vector2i, done: bool) -> float:
 	if not done:
 		new_potential = settings.reward_sticker_value * pow(agent.gamma, distance_to_goal(new_pos) - 1)
 	return agent.gamma * new_potential - old_potential
+
+# the bit for this square's one-time sticker in "collected" (0 if there isn't one)
+func one_time_bit(pos: Vector2i) -> int:
+	var index := maze.one_time_stickers.keys().find(pos)
+	if index == -1:
+		return 0
+	return 1 << index

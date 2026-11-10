@@ -5,11 +5,13 @@ var finish: Vector2i
 var width: int
 var height: int
 var stickers: Dictionary[Vector2i, float] = {}
+var one_time_stickers: Dictionary[Vector2i, float] = {}
 var spikes: Array[Vector2i] = []
 var walls: Array[Vector2i] = []
 var distances: Dictionary[Vector2i, int] = {}
 var crystals: Dictionary[Vector2i, float] = {}
 var thorns:  Dictionary[Vector2i, float] = {}
+var stars: Array[Vector2i] = []
 
 
 func is_finish(pos: Vector2i) -> bool:
@@ -24,7 +26,7 @@ func get_reward(pos: Vector2i) -> float:
 func place_reward_sticker(pos: Vector2i, settings: LevelSettings) -> bool:
 	if not (is_inside(pos)):                             # if pos is outside the maze
 		return false
-	if (stickers.has(pos)):                             # already a sticker on that tile
+	if (stickers.has(pos)) or (one_time_stickers.has(pos)):   # already a sticker on that tile
 		return false
 	var reward_count := 0
 	for value in stickers.values():                     # find number of reward stickers already in maze
@@ -34,11 +36,22 @@ func place_reward_sticker(pos: Vector2i, settings: LevelSettings) -> bool:
 		return false
 	stickers[pos] = settings.reward_sticker_value
 	return true
+
+func place_one_time_sticker(pos: Vector2i, settings: LevelSettings) -> bool:
+	if not can_enter(pos):
+		return false
+	if stickers.has(pos) or one_time_stickers.has(pos): # if another sticker is there
+		return false
+	if one_time_stickers.size() >= settings.max_one_time_stickers:
+		return false
+	one_time_stickers[pos] = settings.one_time_sticker_value
+	return true
+
 	
 func place_penalty_sticker(pos: Vector2i, settings: LevelSettings) -> bool:
 	if not(is_inside(pos)):
 		return false
-	if (stickers.has(pos)):
+	if (stickers.has(pos)) or (one_time_stickers.has(pos)):
 		return false
 	var penalty_count := 0
 	for value in stickers.values():
