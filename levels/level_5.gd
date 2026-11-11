@@ -21,8 +21,8 @@ static func create_settings() -> LevelSettings:
     var settings := LevelSettings.new()
     settings.max_reward_stickers = 1
     settings.max_penalty_stickers = 1
-    settings.episodes = 5000    
+    settings.episodes = 500
     settings.max_steps = 150
     settings.progress_bonus = true
-    settings.patience = 0.99
+    settings.unlocked = ["patience"]
     return settings

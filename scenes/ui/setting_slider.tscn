@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://ba7pjek4v6kgi"]
+
+[ext_resource type="Script" uid="uid://cxb1lliig37i7" path="res://scenes/ui/setting_slider.gd" id="1_hkh2i"]
+
+[node name="SettingSlider" type="HBoxContainer" unique_id=606992269]
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_hkh2i")
+
+[node name="NameLabel" type="Label" parent="." unique_id=1485171581]
+layout_mode = 2
+
+[node name="Slider" type="HSlider" parent="." unique_id=2071289067]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ValueLabel" type="Label" parent="." unique_id=1248496132]
+layout_mode = 2

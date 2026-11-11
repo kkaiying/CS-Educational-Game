@@ -23,4 +23,5 @@ static func create_settings() -> LevelSettings:
     settings.episodes = 100
     settings.max_steps = 150
     settings.progress_bonus = true
+    settings.unlocked = ["bonus"]
     return settings

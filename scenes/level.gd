@@ -8,6 +8,10 @@ var selected_sticker := ""
 @onready var reward_button: Button = $UI/Screen/SidePanel/RewardButton
 @onready var penalty_button: Button = $UI/Screen/SidePanel/PenaltyButton
 @onready var one_time_button: Button = $UI/Screen/SidePanel/OneTimeButton
+@onready var patience_slider = $UI/Screen/SidePanel/SettingsPanel/PatienceSlider
+@onready var step_cost_slider = $UI/Screen/SidePanel/SettingsPanel/StepCostSlider
+@onready var curiosity_slider = $UI/Screen/SidePanel/SettingsPanel/CuriositySlider
+@onready var bonus_checkbox: CheckBox = $UI/Screen/SidePanel/SettingsPanel/BonusCheckBox
 
 const TILE_SPACE := 64
 const TILE_SIZE := 60
@@ -42,6 +46,7 @@ func _ready():
 	$UI/Screen/SidePanel/TrainButton.pressed.connect(train)
 
 	setup_sticker_buttons()
+	setup_settings()
 
 func _draw():
 	draw_maze(maze)
@@ -100,6 +105,16 @@ func screen_to_grid(screen_pos: Vector2) -> Vector2i:
 	return Vector2i(x, y)
 
 func train() -> void:
+	# copy the player's choices into the settings (locked ones keep the level's own value)
+	if "patience" in settings.unlocked:
+		settings.patience = patience_slider.get_value()
+	if "step_cost" in settings.unlocked:
+		settings.step_cost = step_cost_slider.get_value()
+	if "curiosity" in settings.unlocked:
+		settings.curiosity = curiosity_slider.get_value()
+	if "bonus" in settings.unlocked:
+		settings.progress_bonus = bonus_checkbox.button_pressed
+
 	var trainer := Trainer.new()
 	trainer.maze = maze
 	trainer.agent = QAgent.new()
@@ -136,10 +151,14 @@ func get_result(trainer: Trainer) -> String:
 	if maze.crystals.has(route.back()):
 		return "FAIL: took the crystal"
 
-	if route.back() == maze.finish:
-		return "PASS"
+	if route.back() != maze.finish:
+		return "FAIL: ran out of steps"
+	
+	for star in maze.stars:
+		if not star in route:
+			return "FAIL: missed a star"
 
-	return "FAIL: ran out of steps"
+	return "PASS"
 
 func setup_sticker_buttons() -> void:
 	var group := ButtonGroup.new()
@@ -191,3 +210,12 @@ func stickers_changed() -> void:
 	$UI/Screen/SidePanel/ResultLabel.text = "Place stickers, then press Train"
 	update_sticker_counts()
 	queue_redraw()
+
+func setup_settings() -> void:
+	patience_slider.visible = "patience" in settings.unlocked
+	step_cost_slider.visible = "step_cost" in settings.unlocked
+	curiosity_slider.visible = "curiosity" in settings.unlocked
+
+	bonus_checkbox.visible = "bonus" in settings.unlocked or settings.progress_bonus
+	bonus_checkbox.button_pressed = settings.progress_bonus
+	bonus_checkbox.disabled = not "bonus" in settings.unlocked

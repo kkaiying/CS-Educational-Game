@@ -9,7 +9,8 @@ var penalty_sticker_value: float = -10.0
 var progress_bonus: bool = false
 var patience: float = 0.9
 var step_cost: float = 0.0
-var curiosity: float = 0.1 
+var curiosity: float = 0.1
+var unlocked: Array[String] = [] # settings the player can change
 
 var episodes
 var max_steps

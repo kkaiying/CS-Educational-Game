@@ -25,5 +25,5 @@ static func create_settings() -> LevelSettings:
     settings.max_penalty_stickers = 0
     settings.episodes = 500
     settings.max_steps = 200
-    settings.curiosity = 0.9
+    settings.unlocked = ["bonus", "patience", "step_cost", "curiosity"]
     return settings

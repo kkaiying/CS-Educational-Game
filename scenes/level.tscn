@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bn6b80q25bhta"]
 
 [ext_resource type="Script" uid="uid://byq6uam5xl4du" path="res://scenes/level.gd" id="1_2q6dc"]
+[ext_resource type="PackedScene" uid="uid://ba7pjek4v6kgi" path="res://scenes/ui/setting_slider.tscn" id="2_w7c3h"]
 
 [node name="Level" type="Node2D" unique_id=1125532875]
 script = ExtResource("1_2q6dc")
@@ -56,3 +57,27 @@ text = "Train"
 [node name="ResultLabel" type="Label" parent="UI/Screen/SidePanel" unique_id=1317523584]
 layout_mode = 2
 text = "Place stickers and train first"
+
+[node name="SettingsPanel" type="VBoxContainer" parent="UI/Screen/SidePanel" unique_id=358854364]
+layout_mode = 2
+
+[node name="PatienceSlider" parent="UI/Screen/SidePanel/SettingsPanel" unique_id=606992269 instance=ExtResource("2_w7c3h")]
+layout_mode = 2
+setting_name = "Patience"
+values = Array[float]([0.5, 0.7, 0.95, 0.99])
+default_index = 2
+
+[node name="StepCostSlider" parent="UI/Screen/SidePanel/SettingsPanel" unique_id=1554015071 instance=ExtResource("2_w7c3h")]
+layout_mode = 2
+setting_name = "Step cost"
+values = Array[float]([0.0, 0.5, 1.0, 2.0, 5.0, 10.0])
+
+[node name="CuriositySlider" parent="UI/Screen/SidePanel/SettingsPanel" unique_id=1106304613 instance=ExtResource("2_w7c3h")]
+layout_mode = 2
+setting_name = "Curiosity"
+values = Array[float]([0.05, 0.1, 0.3, 0.5, 0.7, 0.9])
+default_index = 1
+
+[node name="BonusCheckBox" type="CheckBox" parent="UI/Screen/SidePanel/SettingsPanel" unique_id=845631210]
+layout_mode = 2
+text = "Progress bonus"
