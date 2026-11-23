@@ -6,6 +6,9 @@ var robot: Robot
 var total_reward: float = 0.0
 var stuck_reason: String = ""
 var settings: LevelSettings
+var practice_routes: Dictionary = {}
+var practice_moves: Dictionary = {}     # practice run number → its moves, kept for the replay
+var last_moves: Array = []              # the direction tried on each step of the latest run, so the replay can show bumps
 
 const STUCK_VISITS := 10
 
@@ -14,12 +17,14 @@ func run_one_episode(max_steps: int) -> Array:
 	total_reward = 0.0
 	var collected := 0                      # every one-time sticker is back at the start of a run
 	var route: Array = [maze.start]
+	last_moves = []
 
 	for i in range(max_steps):
 		var old_pos := robot.position
 		var old_state := Vector3i(old_pos.x, old_pos.y, collected)
 		var dir := agent.choose_direction(old_state)
 		robot.move(dir)
+		last_moves.append(robot.position - old_pos)    # the direction it tried, even if it bumps
 
 		if not maze.can_enter(robot.position): # if robot is trying to exit the maze return it back to its old pos
 			robot.position = old_pos
@@ -48,8 +53,12 @@ func run_one_episode(max_steps: int) -> Array:
 
 
 func train(episodes: int, max_steps: int) -> void:
-	for e in range (episodes):
-		run_one_episode(max_steps)
+	var keep := []
+	for e in range(1, episodes + 1):
+		var practice_route := run_one_episode(max_steps)
+		if e in keep:
+			practice_routes[e] = practice_route
+			practice_moves[e] = last_moves
 
 func run_final_episode(max_steps: int) -> Array:
 	robot.position = maze.start
@@ -61,11 +70,13 @@ func run_final_episode(max_steps: int) -> Array:
 	var start_state := Vector3i(maze.start.x, maze.start.y, 0)
 	var visits := {start_state: 1}          # counted per state, so passing a square again after collecting isn't "stuck"
 	var reward_at_first_visit := {start_state: 0.0}
+	last_moves = []
 
 	for i in range(max_steps):
 		var old_pos := robot.position
 		var dir := agent.choose_direction(Vector3i(old_pos.x, old_pos.y, collected))
 		robot.move(dir)
+		last_moves.append(robot.position - old_pos)
 
 		if not maze.can_enter(robot.position):
 			robot.position = old_pos

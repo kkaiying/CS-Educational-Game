@@ -20,7 +20,6 @@ Game="*uid://51fa3deeeajn"
 [display]
 
 window/stretch/mode="canvas_items"
-window/stretch/aspect="expand"
 
 [physics]
 

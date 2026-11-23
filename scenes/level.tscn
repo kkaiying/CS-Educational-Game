@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://byq6uam5xl4du" path="res://scenes/level.gd" id="1_2q6dc"]
 [ext_resource type="PackedScene" uid="uid://ba7pjek4v6kgi" path="res://scenes/ui/setting_slider.tscn" id="2_w7c3h"]
+[ext_resource type="TileSet" uid="uid://bp3ahgiccckpt" path="res://farm_tileset.tres" id="3_w8frs"]
 
 [node name="Level" type="Node2D" unique_id=1125532875]
 script = ExtResource("1_2q6dc")
@@ -64,7 +65,7 @@ layout_mode = 2
 [node name="PatienceSlider" parent="UI/Screen/SidePanel/SettingsPanel" unique_id=606992269 instance=ExtResource("2_w7c3h")]
 layout_mode = 2
 setting_name = "Patience"
-values = Array[float]([0.5, 0.7, 0.95, 0.99])
+values = Array[float]([0.5, 0.7, 0.95, 0.99, 1.0])
 default_index = 2
 
 [node name="StepCostSlider" parent="UI/Screen/SidePanel/SettingsPanel" unique_id=1554015071 instance=ExtResource("2_w7c3h")]
@@ -81,3 +82,15 @@ default_index = 1
 [node name="BonusCheckBox" type="CheckBox" parent="UI/Screen/SidePanel/SettingsPanel" unique_id=845631210]
 layout_mode = 2
 text = "Progress bonus"
+
+[node name="Ground" type="TileMapLayer" parent="." unique_id=1066671966]
+show_behind_parent = true
+position = Vector2(100, 100)
+scale = Vector2(4, 4)
+tile_set = ExtResource("3_w8frs")
+
+[node name="Objects" type="TileMapLayer" parent="." unique_id=1015622645]
+show_behind_parent = true
+position = Vector2(100, 100)
+scale = Vector2(4, 4)
+tile_set = ExtResource("3_w8frs")
